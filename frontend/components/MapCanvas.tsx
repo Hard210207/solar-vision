@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { MapContainer, TileLayer, Polygon, Marker, useMapEvents } from "react-leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Polygon, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix for Leaflet marker icons not showing up in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -13,7 +12,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Component to handle mouse clicks on the map
 function MapClickHandler({ addPoint }: { addPoint: (latlng: [number, number]) => void }) {
   useMapEvents({
     click(e) {
@@ -23,11 +21,16 @@ function MapClickHandler({ addPoint }: { addPoint: (latlng: [number, number]) =>
   return null;
 }
 
-export default function MapCanvas({ onConfirmArea }: { onConfirmArea: (points: [number, number][]) => void }) {
-  const [points, setPoints] = useState<[number, number][]>([]);
+function ChangeMapView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, 19); 
+  }, [center, map]);
+  return null;
+}
 
-  // Coordinates for the center (Defaulting to a central view)
-  const centerPosition: [number, number] = [23.0225, 72.5714]; 
+export default function MapCanvas({ onConfirmArea, center }: { onConfirmArea: (points: [number, number][]) => void, center: [number, number] }) {
+  const [points, setPoints] = useState<[number, number][]>([]);
 
   const handleAddPoint = (latlng: [number, number]) => {
     setPoints((prev) => [...prev, latlng]);
@@ -42,43 +45,37 @@ export default function MapCanvas({ onConfirmArea }: { onConfirmArea: (points: [
       alert("Please click at least 3 points on the roof to draw a shape.");
       return;
     }
-    // Pass the drawn coordinates back to your main form
     onConfirmArea(points);
   };
 
   return (
-    <div className="relative w-full h-[500px] rounded-xl overflow-hidden border-2 border-slate-300 shadow-lg">
-      <MapContainer center={centerPosition} zoom={18} scrollWheelZoom={true} className="w-full h-full">
-        {/* Free High-Res Satellite Tiles from Esri */}
+    <div className="relative w-full h-full">
+      <MapContainer center={center} zoom={18} scrollWheelZoom={true} className="w-full h-full z-10">
+        <ChangeMapView center={center} />
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+          attribution='&copy; Esri'
         />
-        
         <MapClickHandler addPoint={handleAddPoint} />
-
-        {/* Draw the markers where the user clicks */}
         {points.map((pos, idx) => (
           <Marker key={idx} position={pos} />
         ))}
-
-        {/* Draw the polygon connecting the dots */}
         {points.length > 1 && (
-          <Polygon positions={points} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.4 }} />
+          <Polygon positions={points} pathOptions={{ color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.4 }} />
         )}
       </MapContainer>
 
-      {/* Control Panel UI floating over the map */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000] flex gap-4 bg-white/90 p-3 rounded-lg shadow-xl backdrop-blur-sm">
+      {/* FIXED BUTTONS: Now beautifully themed and safely positioned at the bottom inside the map */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[400] flex gap-4 w-[90%] md:w-auto justify-center">
         <button 
           onClick={clearMap}
-          className="px-4 py-2 bg-red-100 text-red-600 font-semibold rounded-md hover:bg-red-200 transition"
+          className="px-6 py-3 bg-slate-900/90 backdrop-blur-md text-slate-300 font-semibold rounded-xl border border-slate-700 hover:bg-slate-800 hover:text-white transition shadow-xl"
         >
           Clear Shape
         </button>
         <button 
           onClick={handleConfirm}
-          className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition"
+          className="px-6 py-3 bg-amber-500 text-slate-900 font-extrabold rounded-xl hover:bg-amber-400 transition shadow-xl shadow-amber-500/20"
         >
           Calculate Roof Area
         </button>
