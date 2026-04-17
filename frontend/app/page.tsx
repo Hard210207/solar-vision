@@ -46,7 +46,6 @@ export default function SolarEstimatePage() {
     setCalculationResult(null); 
     
     try {
-      // NOTE: Ensure this URL points to your live Render backend!
       const response = await fetch("https://solar-vision-backend.onrender.com/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,7 +54,6 @@ export default function SolarEstimatePage() {
       const result = await response.json();
       if (result.status === "success") {
         setCalculationResult(result);
-        // Default the capacity slider to their physical max roof limit
         setSelectedCapacity(result.system_capacity_kw);
       }
     } catch (error) {
@@ -67,15 +65,15 @@ export default function SolarEstimatePage() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // FRONTEND MATH: Calculates cost and subsidy instantly as user drags the slider
+  // FRONTEND MATH: Calculates cost and subsidy instantly
   const calculateFinancials = (kw: number) => {
-    const costPerKw = 55000; // Estimated average cost per kW in India
+    const costPerKw = 55000; 
     const grossCost = kw * costPerKw;
     
     let subsidy = 0;
     if (kw <= 2) subsidy = kw * 30000;
     else if (kw <= 3) subsidy = 60000 + ((kw - 2) * 18000);
-    else subsidy = 78000; // Capped for systems larger than 3kW
+    else subsidy = 78000; 
 
     return {
       gross: Math.round(grossCost),
@@ -84,9 +82,31 @@ export default function SolarEstimatePage() {
     };
   };
 
-  const currentFinancials = calculateFinancials(selectedCapacity);
+  // NEW FRONTEND MATH: Calculates Environment Impact instantly based on slider
+  const calculateEnvironment = (kw: number) => {
+    if (!calculationResult) return { co2: "0", cars: "0", trees: "0" };
+    
+    const maxKw = calculationResult.system_capacity_kw || 1;
+    const maxKwh = calculationResult.annual_energy_kwh || 0;
+    
+    // Scale the energy based on selected kW
+    const estimatedKwh = (kw / maxKw) * maxKwh;
+    
+    // Grid avg: ~0.82 kg CO2 per kWh
+    const co2Tons = (estimatedKwh * 0.82) / 1000;
+    const cars = co2Tons / 4.6;
+    const trees = co2Tons * 16.5;
 
-  // PM SURYA GHAR LOGIC: Translates electricity bill to recommended kW
+    return {
+      co2: co2Tons.toFixed(1),
+      cars: cars.toFixed(1),
+      trees: Math.round(trees).toLocaleString()
+    };
+  };
+
+  const currentFinancials = calculateFinancials(selectedCapacity);
+  const currentEnvironment = calculateEnvironment(selectedCapacity);
+
   const getRecommendedCapacity = (units: number) => {
     if (units <= 150) return "1 - 2 kW";
     if (units <= 300) return "2 - 3 kW";
@@ -178,7 +198,6 @@ export default function SolarEstimatePage() {
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest text-center">Fine-Tune Your Installation</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  {/* Slider 1: Electricity Bill */}
                   <div className="space-y-4">
                     <label className="block text-slate-300 font-medium">
                       Average Monthly Electricity: <span className="text-amber-400 font-bold text-xl ml-2">{monthlyUnits} <span className="text-sm">Units</span></span>
@@ -201,7 +220,6 @@ export default function SolarEstimatePage() {
                     </p>
                   </div>
 
-                  {/* Slider 2: System Size Selection */}
                   <div className="space-y-4">
                     <label className="block text-slate-300 font-medium">
                       Desired Installation Size: <span className="text-cyan-400 font-bold text-xl ml-2">{selectedCapacity} <span className="text-sm">kW</span></span>
@@ -268,22 +286,22 @@ export default function SolarEstimatePage() {
                 </div>
               </div>
 
-              {/* ENVIRONMENTAL IMPACT */}
+              {/* ENVIRONMENTAL IMPACT - NOW DYNAMIC! */}
               <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">Your Potential Environmental Impact</h3>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">Your Potential Environmental Impact ({selectedCapacity} kW)</h3>
                 <div className="flex flex-col md:flex-row justify-around items-center gap-8 md:gap-6">
                   <div className="text-center">
-                    <p className="text-4xl font-bold text-emerald-400">{calculationResult?.environment?.co2_tons || "0"}</p>
+                    <p className="text-4xl font-bold text-emerald-400">{currentEnvironment.co2}</p>
                     <p className="text-slate-500 text-sm mt-2">Metric tons of CO2 saved</p>
                   </div>
                   <div className="text-slate-700 text-3xl font-bold hidden md:block">=</div>
                   <div className="text-center">
-                    <p className="text-4xl font-bold text-emerald-400">{calculationResult?.environment?.cars || "0"}</p>
+                    <p className="text-4xl font-bold text-emerald-400">{currentEnvironment.cars}</p>
                     <p className="text-slate-500 text-sm mt-2">Cars off the road for 1 yr</p>
                   </div>
                   <div className="text-slate-700 text-3xl font-bold hidden md:block">=</div>
                   <div className="text-center">
-                    <p className="text-4xl font-bold text-emerald-400">{calculationResult?.environment?.trees?.toLocaleString() || "0"}</p>
+                    <p className="text-4xl font-bold text-emerald-400">{currentEnvironment.trees}</p>
                     <p className="text-slate-500 text-sm mt-2">Tree seedlings grown (10 yrs)</p>
                   </div>
                 </div>
