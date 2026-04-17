@@ -15,7 +15,7 @@ export default function SolarEstimatePage() {
     console.log("Sending coordinates to Python...", points);
     
     try {
-      const response = await fetch("https://solar-vision-backend.onrender.com", {
+      const response = await fetch("https://solar-vision-backend.onrender.com/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ points: points }),
