@@ -13,6 +13,9 @@ export default function SolarEstimatePage() {
   const [calculationResult, setCalculationResult] = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [financeTab, setFinanceTab] = useState("buy");
+  
+  // NEW: State for the interactive electricity bill slider
+  const [monthlyUnits, setMonthlyUnits] = useState(250);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -58,10 +61,17 @@ export default function SolarEstimatePage() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // NEW: Logic to calculate recommended capacity based on PM Surya Ghar guidelines
+  const getRecommendedCapacity = (units: number) => {
+    if (units <= 150) return "1 - 2 kW";
+    if (units <= 300) return "2 - 3 kW";
+    return "Above 3 kW";
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30 flex flex-col scroll-smooth">
       
-      {/* HEADER - Fixed overlapping issue with z-[9999] */}
+      {/* HEADER */}
       <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-[9999]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -70,7 +80,6 @@ export default function SolarEstimatePage() {
               SolarSence
             </span>
           </div>
-          {/* Nav Links - Now smooth scroll to sections */}
           <nav className="hidden md:flex gap-8 text-sm font-semibold text-slate-300">
             <a href="#savings-estimator" className="hover:text-amber-400 transition">Savings Estimator</a>
             <a href="#solar-101" className="hover:text-amber-400 transition">Solar 101</a>
@@ -122,6 +131,7 @@ export default function SolarEstimatePage() {
           {calculationResult && !isCalculating && (
             <div className="space-y-8 animate-fade-in-up pb-12">
               
+              {/* TOP STATS */}
               <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                  <div>
                    <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Usable Sunlight</p>
@@ -137,7 +147,36 @@ export default function SolarEstimatePage() {
                  </div>
               </div>
 
-              {/* CRASH FIX: Added optional chaining (?.) so undefined data doesn't break React */}
+              {/* NEW: INTERACTIVE ELECTRICITY USAGE SLIDER */}
+              <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Fine-tune your information</h3>
+                  <label className="block text-slate-300 font-medium mb-4">
+                    Average Monthly Electricity Consumption: <span className="text-amber-400 font-bold text-2xl ml-2">{monthlyUnits} <span className="text-lg">Units</span></span>
+                  </label>
+                  <input
+                    type="range"
+                    min="50"
+                    max="500"
+                    step="10"
+                    value={monthlyUnits}
+                    onChange={(e) => setMonthlyUnits(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-500 mt-2 font-medium">
+                    <span>50 units</span>
+                    <span>300 units</span>
+                    <span>500+ units</span>
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 text-center shadow-inner">
+                  <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Suitable Rooftop Plant Capacity</p>
+                  <p className="text-4xl font-black text-emerald-400">{getRecommendedCapacity(monthlyUnits)}</p>
+                  <p className="text-xs text-slate-500 mt-3 font-medium uppercase tracking-wider">Based on Official PM Surya Ghar Guidelines</p>
+                </div>
+              </div>
+
+              {/* ENVIRONMENTAL IMPACT */}
               <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 text-center md:text-left">Your Potential Environmental Impact</h3>
                 <div className="flex flex-col md:flex-row justify-around items-center gap-8 md:gap-6">
@@ -158,6 +197,7 @@ export default function SolarEstimatePage() {
                 </div>
               </div>
 
+              {/* FINANCIAL DASHBOARD */}
               <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden">
                 <div className="flex border-b border-slate-800">
                   <button onClick={() => setFinanceTab("buy")} className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider ${financeTab === "buy" ? "text-amber-400 border-b-2 border-amber-400 bg-slate-800/50" : "text-slate-500 hover:text-slate-300"}`}>Buy Outright</button>
@@ -197,6 +237,7 @@ export default function SolarEstimatePage() {
                 </div>
               </div>
 
+              {/* PROVIDER SEARCH */}
               <div className="text-center py-12 border-t border-slate-800 mt-12">
                 <h2 className="text-3xl font-bold text-white mb-4">Ready to get started?</h2>
                 <p className="text-slate-400 max-w-2xl mx-auto mb-8">
@@ -214,7 +255,7 @@ export default function SolarEstimatePage() {
           )}
         </section>
 
-        {/* NEW: SOLAR 101 SECTION */}
+        {/* SOLAR 101 SECTION */}
         <section id="solar-101" className="bg-slate-900 border-t border-slate-800 py-20">
           <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">How SolarSence Works</h2>
@@ -238,7 +279,7 @@ export default function SolarEstimatePage() {
           </div>
         </section>
 
-        {/* NEW: FAQ SECTION */}
+        {/* FAQ SECTION */}
         <section id="faq" className="py-20 max-w-4xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
           <div className="space-y-6">
