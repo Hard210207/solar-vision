@@ -22,12 +22,8 @@ export default function SolarEstimatePage() {
       });
 
       const result = await response.json();
-      const result = await response.json();
       
-      // ADD THIS LINE:
       console.log("BACKEND RESPONSE:", result);
-      
-      if (result.status === "success") {
       
       if (result.status === "success") {
         // Pop up the final math for the demo!
