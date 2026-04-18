@@ -388,7 +388,6 @@ export default function SolarEstimatePage() {
             <ul className="text-slate-400 space-y-2 font-medium">
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>Thakor Hard J. <span className="text-slate-600 text-xs">(2401031030023)</span></li>
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>Jaiminsinh Parmar <span className="text-slate-600 text-xs">(2401031030021)</span></li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>Aaditya Arya <span className="text-slate-600 text-xs">(2401031030029)</span></li>
             </ul>
           </div>
           <div>
